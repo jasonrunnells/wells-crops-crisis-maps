@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Tulare Multivariate Clustering Severe 13 Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.css" />
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { margin: 0; }
+    #map { height: 100vh; width: 100%; }
+
+    .leaflet-popup-content-wrapper {
+      border-radius: 10px;
+      font-family: "Host Grotesk", sans-serif;
+      font-size: 1rem;
+      color: #131313;
+      line-height: 1.4;
+    }
+
+    .leaflet-popup-content strong {
+      font-weight: 700;
+      color: #131313;
+    }
+
+    .leaflet-popup-tip {
+      border-radius: 0;
+    }
+
+    #toggleLegend {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      padding: 0.4rem 0.5rem;
+      background: white;
+      border: 1px solid #131313;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #toggleLegend svg {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <button id="toggleLegend">
+    <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" fill="#131313" viewBox="0 0 16 16">
+      <rect width="14" height="2" x="1" y="2"></rect>
+      <rect width="10" height="2" x="1" y="7"></rect>
+      <rect width="6" height="2" x="1" y="12"></rect>
+    </svg>
+  </button>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.js"></script>
+  <script>
+    var map = L.map('map', {
+      fullscreenControl: true
+    }).setView([35.8, -119.1], 9);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+      maxZoom: 18
+    }).addTo(map);
+
+    map.scrollWheelZoom.disable();
+    map.on('mouseover', function () { map.scrollWheelZoom.enable(); });
+    map.on('mouseout', function () { map.scrollWheelZoom.disable(); });
+
+    Promise.all([
+      fetch('data/tulare_boundary.json').then(res => res.json()),
+      fetch('data/tulare_multivariate_severe.json').then(res => res.json())
+    ])
+    .then(([boundaryData, clusterData]) => {
+      L.geoJSON(boundaryData, {
+        style: { color: '#131313', weight: 1, fillOpacity: 0 }
+      }).addTo(map);
+
+      const severeGroup = L.featureGroup();
+
+      L.geoJSON(clusterData, {
+        onEachFeature: function (feature, layer) {
+          if (feature.properties.Culster_Desc === 'Severe Decline') {
+            const centroid = layer.getBounds().getCenter();
+            L.circle(centroid, {
+              radius: 500,
+              fillColor: '#FF0000',
+              color: '#6E6E6E',
+              weight: 1,
+              fillOpacity: 0.6
+            }).bindPopup(
+              `<div>
+                <strong>Cluster:</strong> ${feature.properties.Culster_Desc}<br>
+                <strong>Site Code:</strong> ${feature.properties.SITE_CODE}<br>
+                <strong>Alias:</strong> ${feature.properties.Alia || 'N/A'}<br>
+                <strong>WSE (change):</strong> ${Number(feature.properties.WSE_TOTAL_CHANGE).toFixed(2)}<br>
+                <strong>WSE (slope):</strong> ${Number(feature.properties.WSE_SLOPE).toFixed(2)}
+              </div>`
+            ).addTo(severeGroup);
+          }
+        }
+      });
+
+      severeGroup.addTo(map);
+      if (severeGroup.getLayers().length > 0) {
+        map.fitBounds(severeGroup.getBounds());
+      }
+
+      // Legend
+      const legend = L.control({ position: 'bottomright' });
+      legend.onAdd = function () {
+        const div = L.DomUtil.create('div', 'info legend');
+        div.style.background = 'white';
+        div.style.padding = '0';
+        div.style.border = '1px solid #131313';
+        div.style.borderRadius = '10px';
+        div.style.fontFamily = '"Host Grotesk", sans-serif';
+        div.style.fontSize = '0.9rem';
+        div.style.lineHeight = '1.4';
+        div.style.position = 'relative';
+        div.style.marginRight = '1rem';
+
+        const header = document.createElement('div');
+        header.style.background = '#131313';
+        header.style.color = '#fff';
+        header.style.padding = '0.3rem 0.5rem';
+        header.style.borderTopLeftRadius = '10px';
+        header.style.borderTopRightRadius = '10px';
+        header.style.fontWeight = '700';
+        header.style.textAlign = 'center';
+        header.style.maxWidth = '200px';
+        header.style.wordWrap = 'break-word';
+        header.style.whiteSpace = 'normal';
+        header.textContent = 'Multivariate Clustering';
+        div.appendChild(header);
+
+        const close = document.createElement('span');
+        close.id = 'legendClose';
+        close.innerHTML = '&times;';
+        close.style.position = 'absolute';
+        close.style.top = '-10px';
+        close.style.right = '-10px';
+        close.style.background = 'white';
+        close.style.border = '1px solid #131313';
+        close.style.borderRadius = '50%';
+        close.style.padding = '2px 6px';
+        close.style.cursor = 'pointer';
+        close.style.fontWeight = '700';
+        close.style.fontSize = '1rem';
+        close.style.lineHeight = '1';
+        close.style.display = 'inline-block';
+        div.appendChild(close);
+
+        const content = document.createElement('div');
+        content.style.padding = '0.5rem 1rem 0.75rem 1rem';
+        div.appendChild(content);
+
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.marginBottom = '2px';
+
+        const box = document.createElement('span');
+        box.style.display = 'inline-block';
+        box.style.width = '16px';
+        box.style.height = '16px';
+        box.style.background = '#FF0000';
+        box.style.border = '1px solid #6E6E6E';
+        box.style.marginRight = '6px';
+        box.style.borderRadius = '2px';
+
+        row.appendChild(box);
+        const label = document.createElement('span');
+        label.textContent = 'Severe Decline';
+        row.appendChild(label);
+
+        content.appendChild(row);
+
+        return div;
+      };
+
+      legend.addTo(map);
+
+      const legendDiv = document.querySelector('.legend');
+      if (window.innerWidth < 768) {
+        legendDiv.style.display = 'none';
+      }
+
+      document.getElementById('toggleLegend').addEventListener('click', () => {
+        if (legendDiv.style.display === 'none' || legendDiv.style.display === '') {
+          legendDiv.style.display = 'block';
+        } else {
+          legendDiv.style.display = 'none';
+        }
+      });
+
+      setTimeout(() => {
+        document.getElementById('legendClose').addEventListener('click', () => {
+          legendDiv.style.display = 'none';
+        });
+      }, 0);
+    })
+    .catch(err => console.error("Error loading data:", err));
+  </script>
+</body>
+</html>

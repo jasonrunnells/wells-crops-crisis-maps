@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Tulare CDL Time Series Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { margin: 0; }
+    #map { height: 100vh; width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([35.8, -119.1], 9);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+      maxZoom: 18
+    }).addTo(map);
+
+    fetch('data/tulare_boundary.json')
+      .then(res => res.json())
+      .then(boundaryData => {
+        const boundaryLayer = L.geoJSON(boundaryData, {
+          style: { color: '#131313', weight: 1, fillOpacity: 0 }
+        }).addTo(map);
+
+        const bounds = boundaryLayer.getBounds();
+        map.fitBounds(bounds);
+
+        const images = [
+          'images/cdl_2007.png',
+          'images/cdl_2008.png',
+          'images/cdl_2009.png',
+          'images/cdl_2010.png',
+          'images/cdl_2011.png',
+          'images/cdl_2012.png',
+          'images/cdl_2013.png',
+          'images/cdl_2014.png',
+          'images/cdl_2015.png',
+          'images/cdl_2016.png',
+          'images/cdl_2017.png',
+          'images/cdl_2018.png',
+          'images/cdl_2019.png',
+          'images/cdl_2020.png',
+          'images/cdl_2021.png',
+          'images/cdl_2022.png',
+          'images/cdl_2023.png',
+          'images/cdl_2024.png'
+        ];
+
+        // Preload images
+        const preloaded = images.map(src => {
+          const img = new Image();
+          img.src = src;
+          return img;
+        });
+
+        let index = 0;
+        let overlay = L.imageOverlay(images[index], bounds).addTo(map);
+
+        setInterval(() => {
+          map.removeLayer(overlay);
+          index = (index + 1) % images.length;
+          overlay = L.imageOverlay(images[index], bounds).addTo(map);
+        }, 1000);
+      })
+      .catch(err => console.error('Error loading boundary or images:', err));
+  </script>
+</body>
+</html>
