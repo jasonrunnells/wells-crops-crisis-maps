@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Tulare Multivariate Clustering Severe 13 Map</title>
+  <title>Tulare Severe 13 Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.css" />
@@ -36,7 +36,6 @@
       padding: 0.4rem 0.5rem;
       background: white;
       border: 1px solid #131313;
-      border-radius: 6px;
       cursor: pointer;
     }
 
@@ -117,43 +116,11 @@
         div.style.background = 'white';
         div.style.padding = '0';
         div.style.border = '1px solid #131313';
-        div.style.borderRadius = '10px';
         div.style.fontFamily = '"Host Grotesk", sans-serif';
         div.style.fontSize = '0.9rem';
         div.style.lineHeight = '1.4';
         div.style.position = 'relative';
         div.style.marginRight = '1rem';
-
-        const header = document.createElement('div');
-        header.style.background = '#131313';
-        header.style.color = '#fff';
-        header.style.padding = '0.3rem 0.5rem';
-        header.style.borderTopLeftRadius = '10px';
-        header.style.borderTopRightRadius = '10px';
-        header.style.fontWeight = '700';
-        header.style.textAlign = 'center';
-        header.style.maxWidth = '200px';
-        header.style.wordWrap = 'break-word';
-        header.style.whiteSpace = 'normal';
-        header.textContent = 'Multivariate Clustering';
-        div.appendChild(header);
-
-        const close = document.createElement('span');
-        close.id = 'legendClose';
-        close.innerHTML = '&times;';
-        close.style.position = 'absolute';
-        close.style.top = '-10px';
-        close.style.right = '-10px';
-        close.style.background = 'white';
-        close.style.border = '1px solid #131313';
-        close.style.borderRadius = '50%';
-        close.style.padding = '2px 6px';
-        close.style.cursor = 'pointer';
-        close.style.fontWeight = '700';
-        close.style.fontSize = '1rem';
-        close.style.lineHeight = '1';
-        close.style.display = 'inline-block';
-        div.appendChild(close);
 
         const content = document.createElement('div');
         content.style.padding = '0.5rem 1rem 0.75rem 1rem';
@@ -199,9 +166,6 @@
       });
 
       setTimeout(() => {
-        document.getElementById('legendClose').addEventListener('click', () => {
-          legendDiv.style.display = 'none';
-        });
       }, 0);
     })
     .catch(err => console.error("Error loading data:", err));
